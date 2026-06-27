@@ -1,20 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
+  <head>
     <title>CRM API - Teste JWT</title>
     <style>
-        body { font-family: Arial; max-width: 800px; margin: 50px auto; }
-        input { padding: 8px; margin: 5px; width: 200px; }
-        button { padding: 10px 20px; cursor: pointer; }
-        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+      body {
+        font-family: Arial;
+        max-width: 800px;
+        margin: 50px auto;
+      }
+      input {
+        padding: 8px;
+        margin: 5px;
+        width: 200px;
+      }
+      button {
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 10px;
+        overflow-x: auto;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>CRM API - JWT Test</h1>
 
     <h2>1. Login</h2>
-    <input type="text" id="username" placeholder="Username" value="admin">
-    <input type="password" id="password" placeholder="Password" value="admin123">
+    <input type="text" id="username" placeholder="Username" value="admin" />
+    <input
+      type="password"
+      id="password"
+      placeholder="Password"
+      value="admin123"
+    />
     <button onclick="fazerLogin()">Login</button>
     <pre id="tokenResult"></pre>
 
@@ -23,71 +43,198 @@
     <pre id="clientesResult"></pre>
 
     <h2>3. Criar Cliente</h2>
-    <input type="text" id="clientName" placeholder="Nome" value="João Silva">
-    <input type="email" id="clientEmail" placeholder="Email" value="joao@email.com">
+    <input type="text" id="clientName" placeholder="Nome" value="João Silva" />
+    <input
+      type="email"
+      id="clientEmail"
+      placeholder="Email"
+      value="joao@email.com"
+    />
     <button onclick="criarCliente()">POST /api/clientes/</button>
     <pre id="criarResult"></pre>
 
     <script>
-        // Faz login e salva o token no localStorage
-        async function fazerLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+      // Faz login e salva o token no localStorage
+      async function fazerLogin() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
 
-            const response = await fetch('http://127.0.0.1:8000/api/token/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+        const response = await fetch("http://127.0.0.1:8000/api/token/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
 
-            const data = await response.json();
-            localStorage.setItem('token', data.access);  // Guarda o token
-            document.getElementById('tokenResult').textContent = JSON.stringify(data, null, 2);
+        const data = await response.json();
+        localStorage.setItem("token", data.access); // Guarda o token
+        document.getElementById("tokenResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
+
+      // Lista clientes usando o token guardado
+      async function listarClientes() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Faça login primeiro!");
+          return;
         }
 
-        // Lista clientes usando o token guardado
-        async function listarClientes() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Faça login primeiro!');
-                return;
-            }
+        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
 
-            const response = await fetch('http://127.0.0.1:8000/api/clientes/', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+        const data = await response.json();
+        document.getElementById("clientesResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
 
-            const data = await response.json();
-            document.getElementById('clientesResult').textContent = JSON.stringify(data, null, 2);
+      // Cria um novo cliente
+      async function criarCliente() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Faça login primeiro!");
+          return;
         }
 
-        // Cria um novo cliente
-        async function criarCliente() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                alert('Faça login primeiro!');
-                return;
-            }
+        const name = document.getElementById("clientName").value;
+        const email = document.getElementById("clientEmail").value;
 
-            const name = document.getElementById('clientName').value;
-            const email = document.getElementById('clientEmail').value;
+        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, phone: "", status: "lead" }),
+        });
 
-            const response = await fetch('http://127.0.0.1:8000/api/clientes/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name, email, phone: '', status: 'lead' })
-            });
-
-            const data = await response.json();
-            document.getElementById('criarResult').textContent = JSON.stringify(data, null, 2);
-        }
+        const data = await response.json();
+        document.getElementById("criarResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
     </script>
-</body>
+    <h2>5. Gerenciar Notas</h2>
+
+    <label>Selecione um cliente:</label>
+    <select id="clientId">
+      <option value="">Carregando clientes...</option>
+    </select>
+    <button onclick="carregarClientes()">Atualizar Lista</button>
+
+    <br /><br />
+
+    <input
+      type="text"
+      id="noteText"
+      placeholder="Texto da nota"
+      style="width: 300px"
+    />
+    <select id="noteType">
+      <option value="A">Anotação</option>
+      <option value="C">Contato</option>
+      <option value="R">Reunião</option>
+    </select>
+    <button onclick="criarNota()">Criar Nota</button>
+    <button onclick="listarNotas()">Listar Notas</button>
+    <pre id="notasResult"></pre>
+
+    <script>
+      async function carregarClientes() {
+        const token = localStorage.getItem("token");
+        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        const clientes = await response.json();
+        const select = document.getElementById("clientId");
+        select.innerHTML = "";
+
+        clientes.forEach((c) => {
+          const option = document.createElement("option");
+          option.value = c.id;
+          option.text = c.name;
+          select.appendChild(option);
+        });
+      }
+
+      async function criarNota() {
+        const token = localStorage.getItem("token");
+        const clientId = document.getElementById("clientId").value;
+        const texto = document.getElementById("noteText").value;
+        const tipo = document.getElementById("noteType").value;
+
+        if (!clientId) {
+          alert("Selecione um cliente!");
+          return;
+        }
+
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/clientes/${clientId}/notas/`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ texto, tipo }),
+          },
+        );
+
+        const data = await response.json();
+        document.getElementById("notasResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
+
+      async function listarNotas() {
+        const token = localStorage.getItem("token");
+        const clientId = document.getElementById("clientId").value;
+
+        if (!clientId) {
+          alert("Selecione um cliente!");
+          return;
+        }
+
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/clientes/${clientId}/notas/`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        const data = await response.json();
+        document.getElementById("notasResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
+
+      // Carrega os clientes quando abre a página
+      window.onload = carregarClientes;
+    </script>
+  </body>
 </html>
