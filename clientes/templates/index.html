@@ -1,80 +1,377 @@
 <!doctype html>
 <html>
   <head>
-    <title>CRM API - Teste JWT</title>
+    <title>CRM API - Teste de Permissões</title>
     <style>
       body {
         font-family: Arial;
-        max-width: 800px;
-        margin: 50px auto;
+        max-width: 900px;
+        margin: 30px auto;
+      }
+      .section {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
       }
       input {
         padding: 8px;
         margin: 5px;
-        width: 200px;
+        width: 250px;
       }
       button {
         padding: 10px 20px;
         cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 3px;
+      }
+      button:hover {
+        background: #0056b3;
       }
       pre {
         background: #f5f5f5;
         padding: 10px;
         overflow-x: auto;
+        font-size: 12px;
+      }
+      .info {
+        background: #e7f3ff;
+        padding: 10px;
+        border-left: 4px solid #2196f3;
+        margin: 10px 0;
+      }
+      .success {
+        background: #d4edda;
+        padding: 10px;
+        border-left: 4px solid #28a745;
+      }
+      .error {
+        background: #f8d7da;
+        padding: 10px;
+        border-left: 4px solid #dc3545;
       }
     </style>
   </head>
   <body>
-    <h1>CRM API - JWT Test</h1>
+    <h1>🔐 CRM API - Teste de Permissões</h1>
 
-    <h2>1. Login</h2>
-    <input type="text" id="username" placeholder="Username" value="admin" />
-    <input
-      type="password"
-      id="password"
-      placeholder="Password"
-      value="admin123"
-    />
-    <button onclick="fazerLogin()">Login</button>
-    <pre id="tokenResult"></pre>
+    <!-- SEÇÃO 1: LOGIN -->
+    <div class="section">
+      <h2>1. Login</h2>
+      <div id="userInfo" class="info">Não autenticado</div>
 
-    <h2>2. Listar Clientes</h2>
-    <button onclick="listarClientes()">GET /api/clientes/</button>
-    <pre id="clientesResult"></pre>
+      <input type="text" id="username" placeholder="Username" value="admin" />
+      <input
+        type="password"
+        id="password"
+        placeholder="Senha"
+        value="admin123"
+      />
+      <button onclick="fazerLogin()">Login</button>
+      <pre id="tokenResult"></pre>
+    </div>
 
-    <h2>3. Criar Cliente</h2>
-    <input type="text" id="clientName" placeholder="Nome" value="João Silva" />
-    <input
-      type="email"
-      id="clientEmail"
-      placeholder="Email"
-      value="joao@email.com"
-    />
-    <button onclick="criarCliente()">POST /api/clientes/</button>
-    <pre id="criarResult"></pre>
+    <!-- SEÇÃO 2: CRIAR NOVO VENDEDOR -->
+    <div class="section">
+      <h2>2. Registrar Novo Vendedor</h2>
+      <input type="text" id="newUsername" placeholder="Username (ex: pedro)" />
+      <input
+        type="email"
+        id="newEmail"
+        placeholder="Email (ex: pedro@empresa.com)"
+      />
+      <input type="password" id="newPassword" placeholder="Senha" />
+      <button onclick="registrarVendedor()">Registrar Vendedor</button>
+      <pre id="registerResult"></pre>
+    </div>
+
+    <!-- SEÇÃO 3: CRIAR CLIENTE -->
+    <div class="section">
+      <h2>3. Criar Cliente (será vinculado ao usuário logado)</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <input
+          type="text"
+          id="clientName"
+          placeholder="Nome do cliente"
+          value=""
+        />
+        <input type="email" id="clientEmail" placeholder="Email" value="" />
+        <input type="text" id="clientPhone" placeholder="Telefone" value="" />
+        <select id="clientStatus">
+          <option value="A">Ativo</option>
+          <option value="I">Inativo</option>
+        </select>
+      </div>
+      <button onclick="criarCliente()">Criar Cliente</button>
+      <pre id="criarClienteResult"></pre>
+    </div>
+    <!-- SEÇÃO 4.5: EDITAR CLIENTE -->
+    <div class="section">
+      <h2>4.5 Editar Cliente</h2>
+      <p>Selecione um cliente e altere seus dados</p>
+
+      <label>Cliente para editar (ID):</label>
+      <input
+        type="text"
+        id="editClientId"
+        placeholder="Cole o UUID do cliente aqui"
+      />
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-top: 10px;
+        "
+      >
+        <input type="text" id="editClientName" placeholder="Novo nome" />
+        <input type="email" id="editClientEmail" placeholder="Novo email" />
+        <input type="text" id="editClientPhone" placeholder="Novo telefone" />
+        <select id="editClientStatus">
+          <option value="A">Ativo</option>
+          <option value="I">Inativo</option>
+        </select>
+      </div>
+
+      <button onclick="carregarClienteParaEditar()">Carregar Cliente</button>
+      <button onclick="salvarEdicaoCliente()">Salvar Alterações</button>
+      <pre id="editResult"></pre>
+    </div>
+    <!-- SEÇÃO 4: LISTAR CLIENTES -->
+    <div class="section">
+      <h2>4. Listar Clientes (filtrado por permissão)</h2>
+      <p>
+        👤 Admin vê TODOS os clientes | 💼 Vendedor vê apenas os SEUS clientes
+      </p>
+      <button onclick="listarClientes()">Listar Clientes</button>
+      <pre id="clientesResult"></pre>
+    </div>
+
+    <!-- SEÇÃO 5: BUSCAR CLIENTES -->
+    <div class="section">
+      <h2>5. Buscar Clientes</h2>
+      <input
+        type="text"
+        id="searchTerm"
+        placeholder="Digite nome, email ou telefone"
+      />
+      <button onclick="buscarClientes()">Buscar</button>
+      <pre id="buscaResult"></pre>
+    </div>
+
+    <!-- SEÇÃO 6: TESTAR ACESSO NEGADO -->
+    <div class="section">
+      <h2>6. Testar Restrições de Acesso</h2>
+      <p>Vendedores NÃO conseguem acessar clientes de outros vendedores</p>
+      <input type="text" id="clientIdTest" placeholder="ID do cliente (UUID)" />
+      <button onclick="testarAcessoCliente()">Tentar Acessar Cliente</button>
+      <pre id="testeResult"></pre>
+    </div>
 
     <script>
-      // Faz login e salva o token no localStorage
+      const API_URL = "http://127.0.0.1:8000/api";
+
+      // Atualiza o painel de informações do usuário
+      function atualizarInfoUsuario() {
+        const token = localStorage.getItem("token");
+        const userInfo = localStorage.getItem("userInfo");
+
+        if (token && userInfo) {
+          const user = JSON.parse(userInfo);
+          const isAdmin = user.is_superuser ? "👑 ADMIN" : "💼 VENDEDOR";
+          document.getElementById("userInfo").innerHTML =
+            `<strong>Logado como:</strong> ${user.username} (${user.email}) ${isAdmin}`;
+          document.getElementById("userInfo").className = "success";
+        }
+      }
+
+      // LOGIN
       async function fazerLogin() {
         const username = document.getElementById("username").value;
         const password = document.getElementById("password").value;
 
-        const response = await fetch("http://127.0.0.1:8000/api/token/", {
+        const response = await fetch(`${API_URL}/token/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
         });
 
+        if (!response.ok) {
+          document.getElementById("tokenResult").textContent =
+            "Erro: usuário ou senha inválidos";
+          document.getElementById("userInfo").className = "error";
+          return;
+        }
+
         const data = await response.json();
-        localStorage.setItem("token", data.access); // Guarda o token
+        localStorage.setItem("token", data.access);
+        localStorage.setItem("refresh", data.refresh);
+
+        // Pega info do usuário
+        const userResponse = await fetch(`${API_URL}/auth/user/`, {
+          headers: { Authorization: `Bearer ${data.access}` },
+        }).catch(() => null);
+
+        if (userResponse && userResponse.ok) {
+          const userData = await userResponse.json();
+          localStorage.setItem("userInfo", JSON.stringify(userData));
+        }
+
         document.getElementById("tokenResult").textContent = JSON.stringify(
           data,
           null,
           2,
         );
+        atualizarInfoUsuario();
       }
 
-      // Lista clientes usando o token guardado
+      // REGISTRAR VENDEDOR
+      async function registrarVendedor() {
+        const username = document.getElementById("newUsername").value;
+        const email = document.getElementById("newEmail").value;
+        const password = document.getElementById("newPassword").value;
+
+        const response = await fetch(`${API_URL}/register/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          document.getElementById("registerResult").textContent =
+            `✅ Vendedor criado!\n\nUsername: ${data.username}\nEmail: ${data.email}\n\nAgora faça login com essas credenciais.`;
+          document.getElementById("registerResult").className = "success";
+        } else {
+          document.getElementById("registerResult").textContent =
+            JSON.stringify(data, null, 2);
+        }
+      }
+
+      // CRIAR CLIENTE
+      async function criarCliente() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Faça login primeiro!");
+          return;
+        }
+
+        const name = document.getElementById("clientName").value;
+        const email = document.getElementById("clientEmail").value;
+        const phone = document.getElementById("clientPhone").value;
+        const status = document.getElementById("clientStatus").value;
+
+        if (!name || !email) {
+          alert("Preencha nome e email!");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/clientes/`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, phone, status }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          document.getElementById("criarClienteResult").textContent =
+            `✅ Cliente criado com sucesso!\n\n${JSON.stringify(data, null, 2)}`;
+          document.getElementById("criarClienteResult").className = "success";
+          // Limpa os campos
+          document.getElementById("clientName").value = "";
+          document.getElementById("clientEmail").value = "";
+          document.getElementById("clientPhone").value = "";
+        } else {
+          document.getElementById("criarClienteResult").textContent =
+            JSON.stringify(data, null, 2);
+        }
+      }
+      // EDITAR CLIENTE
+      async function carregarClienteParaEditar() {
+        const token = localStorage.getItem("token");
+        const clientId = document.getElementById("editClientId").value;
+
+        if (!clientId) {
+          alert("Cole o ID do cliente!");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/clientes/${clientId}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById("editClientName").value = data.name;
+          document.getElementById("editClientEmail").value = data.email;
+          document.getElementById("editClientPhone").value = data.phone;
+          document.getElementById("editClientStatus").value = data.status;
+          document.getElementById("editResult").textContent =
+            '✅ Cliente carregado! Altere os dados e clique em "Salvar Alterações"';
+          document.getElementById("editResult").className = "success";
+        } else if (response.status === 403) {
+          document.getElementById("editResult").textContent =
+            "❌ ACESSO NEGADO - Este cliente não é seu!";
+          document.getElementById("editResult").className = "error";
+        } else {
+          const data = await response.json();
+          document.getElementById("editResult").textContent = JSON.stringify(
+            data,
+            null,
+            2,
+          );
+        }
+      }
+
+      async function salvarEdicaoCliente() {
+        const token = localStorage.getItem("token");
+        const clientId = document.getElementById("editClientId").value;
+        const name = document.getElementById("editClientName").value;
+        const email = document.getElementById("editClientEmail").value;
+        const phone = document.getElementById("editClientPhone").value;
+        const status = document.getElementById("editClientStatus").value;
+
+        if (!clientId || !name || !email) {
+          alert("Preencha ID, nome e email!");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/clientes/${clientId}/`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name, email, phone, status }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          document.getElementById("editResult").textContent =
+            `✅ Cliente atualizado com sucesso!\n\n${JSON.stringify(data, null, 2)}`;
+          document.getElementById("editResult").className = "success";
+        } else if (response.status === 403) {
+          document.getElementById("editResult").textContent =
+            "❌ ACESSO NEGADO - Este cliente não é seu!";
+          document.getElementById("editResult").className = "error";
+        } else {
+          document.getElementById("editResult").textContent = JSON.stringify(
+            data,
+            null,
+            2,
+          );
+        }
+      }
+      // LISTAR CLIENTES
       async function listarClientes() {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -82,8 +379,7 @@
           return;
         }
 
-        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
-          method: "GET",
+        const response = await fetch(`${API_URL}/clientes/`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -98,143 +394,74 @@
         );
       }
 
-      // Cria um novo cliente
-      async function criarCliente() {
+      // BUSCAR CLIENTES
+      async function buscarClientes() {
         const token = localStorage.getItem("token");
         if (!token) {
           alert("Faça login primeiro!");
           return;
         }
 
-        const name = document.getElementById("clientName").value;
-        const email = document.getElementById("clientEmail").value;
+        const searchTerm = document.getElementById("searchTerm").value;
+        const url = `${API_URL}/clientes/?search=${searchTerm}`;
 
-        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name, email, phone: "", status: "lead" }),
-        });
-
-        const data = await response.json();
-        document.getElementById("criarResult").textContent = JSON.stringify(
-          data,
-          null,
-          2,
-        );
-      }
-    </script>
-    <h2>5. Gerenciar Notas</h2>
-
-    <label>Selecione um cliente:</label>
-    <select id="clientId">
-      <option value="">Carregando clientes...</option>
-    </select>
-    <button onclick="carregarClientes()">Atualizar Lista</button>
-
-    <br /><br />
-
-    <input
-      type="text"
-      id="noteText"
-      placeholder="Texto da nota"
-      style="width: 300px"
-    />
-    <select id="noteType">
-      <option value="A">Anotação</option>
-      <option value="C">Contato</option>
-      <option value="R">Reunião</option>
-    </select>
-    <button onclick="criarNota()">Criar Nota</button>
-    <button onclick="listarNotas()">Listar Notas</button>
-    <pre id="notasResult"></pre>
-
-    <script>
-      async function carregarClientes() {
-        const token = localStorage.getItem("token");
-        const response = await fetch("http://127.0.0.1:8000/api/clientes/", {
-          method: "GET",
+        const response = await fetch(url, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
 
-        const clientes = await response.json();
-        const select = document.getElementById("clientId");
-        select.innerHTML = "";
+        const data = await response.json();
+        document.getElementById("buscaResult").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+      }
 
-        clientes.forEach((c) => {
-          const option = document.createElement("option");
-          option.value = c.id;
-          option.text = c.name;
-          select.appendChild(option);
+      // TESTAR ACESSO A CLIENTE ESPECÍFICO
+      async function testarAcessoCliente() {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Faça login primeiro!");
+          return;
+        }
+
+        const clientId = document.getElementById("clientIdTest").value;
+        if (!clientId) {
+          alert("Cole o ID do cliente!");
+          return;
+        }
+
+        const response = await fetch(`${API_URL}/clientes/${clientId}/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         });
-      }
 
-      async function criarNota() {
-        const token = localStorage.getItem("token");
-        const clientId = document.getElementById("clientId").value;
-        const texto = document.getElementById("noteText").value;
-        const tipo = document.getElementById("noteType").value;
-
-        if (!clientId) {
-          alert("Selecione um cliente!");
-          return;
+        if (response.status === 403) {
+          document.getElementById("testeResult").textContent =
+            "❌ ACESSO NEGADO - Você não é o responsável por este cliente!";
+          document.getElementById("testeResult").className = "error";
+        } else if (response.ok) {
+          const data = await response.json();
+          document.getElementById("testeResult").textContent =
+            `✅ ACESSO PERMITIDO\n\n${JSON.stringify(data, null, 2)}`;
+          document.getElementById("testeResult").className = "success";
+        } else {
+          const data = await response.json();
+          document.getElementById("testeResult").textContent = JSON.stringify(
+            data,
+            null,
+            2,
+          );
         }
-
-        const response = await fetch(
-          `http://127.0.0.1:8000/api/clientes/${clientId}/notas/`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ texto, tipo }),
-          },
-        );
-
-        const data = await response.json();
-        document.getElementById("notasResult").textContent = JSON.stringify(
-          data,
-          null,
-          2,
-        );
       }
 
-      async function listarNotas() {
-        const token = localStorage.getItem("token");
-        const clientId = document.getElementById("clientId").value;
-
-        if (!clientId) {
-          alert("Selecione um cliente!");
-          return;
-        }
-
-        const response = await fetch(
-          `http://127.0.0.1:8000/api/clientes/${clientId}/notas/`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        const data = await response.json();
-        document.getElementById("notasResult").textContent = JSON.stringify(
-          data,
-          null,
-          2,
-        );
-      }
-
-      // Carrega os clientes quando abre a página
-      window.onload = carregarClientes;
+      // Atualiza as infos ao carregar a página
+      window.onload = atualizarInfoUsuario;
     </script>
   </body>
 </html>
