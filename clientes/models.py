@@ -31,6 +31,8 @@ class Note(models.Model):
     )
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # ↑ ESTE CAMPO É NECESSÁRIO
+    
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     texto = models.CharField(max_length=500)

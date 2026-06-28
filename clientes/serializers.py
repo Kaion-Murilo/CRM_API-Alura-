@@ -30,5 +30,6 @@ class ClientSerializer(serializers.ModelSerializer):
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ['id', 'client', 'user', 'texto', 'tipo', 'data_criacao']
-        read_only_fields = ['id', 'data_criacao', 'user', 'client']
+        fields = ['client', 'user', 'texto', 'tipo', 'data_criacao']
+        # ↑ remova 'id' daqui
+        read_only_fields = ['data_criacao', 'user', 'client']
