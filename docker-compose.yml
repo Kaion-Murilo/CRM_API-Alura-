@@ -1,0 +1,52 @@
+version: '3.8'
+# version → versão do Docker Compose
+
+services:
+  # ──────────────────────────────────────
+  # Banco de dados PostgreSQL
+  # ──────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    # image → usa imagem oficial do PostgreSQL versão 15 (alpine = tamanho menor).
+    
+    container_name: crm-db
+    environment:
+      POSTGRES_DB: crm_db
+      # POSTGRES_DB → nome do banco de dados criado automaticamente.
+      
+      POSTGRES_USER: crm_user
+      # POSTGRES_USER → usuário do banco.
+      
+      POSTGRES_PASSWORD: crm_password
+      # POSTGRES_PASSWORD → senha do banco.
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # volumes → salva dados do banco entre reinicializações.
+    
+    ports:
+      - "5432:5432"
+      # ports → expõe porta PostgreSQL para conexão externa.
+
+  # ──────────────────────────────────────
+  # Aplicação Django
+  # ──────────────────────────────────────
+  web:
+    build: .
+    container_name: crm-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      DEBUG: "True"
+    depends_on:
+      - db
+      # depends_on → aguarda o banco iniciar antes de iniciar a web.
+
+# ──────────────────────────────────────
+# Volumes persistentes
+# ──────────────────────────────────────
+volumes:
+  postgres_data:
+    # postgres_data → volume nomeado que persiste dados do banco.

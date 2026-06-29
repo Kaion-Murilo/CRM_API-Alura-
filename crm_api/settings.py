@@ -86,15 +86,33 @@ WSGI_APPLICATION = 'crm_api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'CONN_MAX_AGE': 0,  # ← adicione esta linha
-        'TIMEOUT': 30,      # ← adicione esta linha
-    }
-}
+import os
+from urllib.parse import urlparse
 
+# ──────────────────────────────────────
+# Banco de dados - suporta SQLite ou PostgreSQL
+# ──────────────────────────────────────
+if os.getenv('DATABASE_URL'):
+    # Se DATABASE_URL está definida, usa PostgreSQL
+    db_url = urlparse(os.getenv('DATABASE_URL'))
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_url.path[1:],
+            'USER': db_url.username,
+            'PASSWORD': db_url.password,
+            'HOST': db_url.hostname,
+            'PORT': db_url.port or 5432,
+        }
+    }
+else:
+    # Senão, usa SQLite (desenvolvimento local)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

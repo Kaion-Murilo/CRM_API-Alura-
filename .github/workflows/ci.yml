@@ -1,0 +1,73 @@
+name: CI/CD Pipeline
+# name → nome do workflow que aparece no GitHub
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+# on → executa quando faz push ou pull request
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # runs-on → usa máquina Linux do GitHub
+    
+    steps:
+      # ──────────────────────────────────────
+      # Clonar o repositório
+      # ──────────────────────────────────────
+      - uses: actions/checkout@v3
+        # actions/checkout@v3 → faz clone do seu repo
+      
+      # ──────────────────────────────────────
+      # Configurar Python
+      # ──────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+        # Instala Python 3.11 na máquina virtual
+      
+      # ──────────────────────────────────────
+      # Instalar dependências
+      # ──────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+        # run → executa comandos bash
+      
+      # ──────────────────────────────────────
+      # Rodar testes
+      # ──────────────────────────────────────
+      - name: Run tests
+        run: pytest --cov=clientes --cov-report=xml
+        # pytest → roda todos os testes e gera relatório XML
+      
+      # ──────────────────────────────────────
+      # Upload do coverage report
+      # ──────────────────────────────────────
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+        # codecov → serviço que rastreia cobertura de testes
+
+  build:
+    runs-on: ubuntu-latest
+    # job separado para build da imagem Docker
+    
+    needs: test
+    # needs: test → só executa se os testes passarem
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker image
+        run: docker build -t crm-api:latest .
+        # docker build → constrói a imagem Docker
+      
+      - name: List Docker images
+        run: docker images
+        # docker images → mostra as imagens criadas

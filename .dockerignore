@@ -1,0 +1,12 @@
+db.sqlite3
+*.pyc
+__pycache__
+.git
+.gitignore
+.env
+venv/
+*.egg-info
+.pytest_cache
+htmlcov
+.coverage
+node_modules
